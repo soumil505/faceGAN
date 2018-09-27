@@ -66,8 +66,8 @@ class GAN():
             return d
         
 
-        img_inp=Input(shape=self.img_shape)
-        l_inp=Input(shape=(self.img_shape[0],self.img_shape[1],1))
+        img_inp=Input(shape=self.img_shape,name="discriminator_img_input")
+        l_inp=Input(shape=(self.img_shape[0],self.img_shape[1],1),name="discriminator_exxpression_input")
         combined_imgs = Concatenate(axis=-1)([img_inp, l_inp])
         
         d1 = d_layer(combined_imgs, self.df, bn=False)
@@ -101,7 +101,7 @@ class GAN():
             return u
 
         # Image input
-        d0 = Input(shape=(self.img_shape[0],self.img_shape[1],1))
+        d0 = Input(shape=(self.img_shape[0],self.img_shape[1],1),name="generator_input")
 
         # Downsampling
         d1 = conv2d(d0, self.gf, bn=False)
@@ -122,7 +122,8 @@ class GAN():
         return Model(d0, output_img)
     def load_batch(self, batch_size=1, is_testing=False):
         n_batches=int(len(self.faces)/batch_size)
-        imgs_A, imgs_B = [], []
+        imgs_A=[]
+        imgs_B=[]
         for i in range(n_batches-1):
             f_batch = self.faces[i*batch_size:(i+1)*batch_size]
             l_batch = self.landmarks[i*batch_size:(i+1)*batch_size]
@@ -135,7 +136,8 @@ class GAN():
                 imgs_B.append(img_B)
         imgs_A = np.array(imgs_A)/127.5 - 1.
         imgs_B = np.array(imgs_B)/127.5 - 1.
-
+        print(np.shape(imgs_B))
+        print(np.shape(imgs_A))
         yield imgs_A, imgs_B
 
     def train(self, epochs, batch_size=1, sample_interval=50):
@@ -144,7 +146,7 @@ class GAN():
         start_time = datetime.datetime.now()
         for epoch in range(epochs):
             for batch_i, (img_faces, img_landscapes) in enumerate(self.load_batch(batch_size)):
-                img_landscapes=img_landscapes[:,:,0]
+                img_landscapes=np.reshape(img_landscapes[:,:,:,0],(-1,self.img_shape[0],self.img_shape[1],1))
                 fake_face = self.generator.predict(img_landscapes)
                 d_loss_real = self.discriminator.train_on_batch([img_faces, img_landscapes], valid)
                 d_loss_fake = self.discriminator.train_on_batch([fake_face, img_landscapes], fake)
