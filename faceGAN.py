@@ -16,7 +16,6 @@ import os
 import matplotlib.pyplot as plt
 import datetime
 from imutils import face_utils
-import dlib
 import glob
 import numpy as np
 
@@ -138,20 +137,6 @@ class GAN():
         imgs_B = np.array(imgs_B)/127.5 - 1.
 
         yield imgs_A, imgs_B
-            
-    def expression_loss(img1,img2):
-        detector = dlib.get_frontal_face_detector()
-        predictor = dlib.shape_predictor("./keypoints/shape_predictor_68_face_landmarks.dat")
-        gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-        rects1 = detector(gray1, 1)
-        shape1 = predictor(gray1, rects1[0])
-        shape1=face_utils.shape_to_np(shape1)
-        gray2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-        rects2 = detector(gray2, 1)
-        shape2 = predictor(gray2, rects2[0])
-        shape2=face_utils.shape_to_np(shape2)
-        loss=np.sum((shape1**2-shape2**2)/(68*2))
-        return loss
 
     def train(self, epochs, batch_size=1, sample_interval=50):
         valid = np.ones((batch_size,))
